@@ -1,0 +1,164 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:scrollbars="vertical"
+    android:scrollbarThumbVertical="@color/colorAccent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fadingEdge="vertical"
+                android:scrollbars="vertical">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <Button
+                        android:id="@+id/discoverPeers"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="discoverPeers" />
+
+                    <Button
+                        android:id="@+id/become_GO"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="become_GO" />
+
+                    <Button
+                        android:id="@+id/connect"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="connect" />
+
+                    <Button
+                        android:id="@+id/removeGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="removeGroup" />
+
+                    <Button
+                        android:id="@+id/Server"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Server" />
+
+                    <Button
+                        android:id="@+id/Client"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Client" />
+
+                    <Button
+                        android:id="@+id/requestGroupInfo"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="requestGroupInfo" />
+
+                    <Button
+                        android:id="@+id/getIPaddr"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="getIPaddr" />
+
+                    <Button
+                        android:id="@+id/setDeviceName"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="setDeviceName" />
+
+                    <Button
+                        android:id="@+id/scanResult"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="scanResult" />
+
+                    <Button
+                        android:id="@+id/connectToLegacy"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="connectToLegacy" />
+
+                    <Button
+                        android:id="@+id/getBatteryCapacity"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="getBatteryCapacity" />
+                    <EditText
+                        android:id="@+id/ipText"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <Button
+                        android:id="@+id/directedSend"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="directedSend"/>
+                    <Button
+                        android:id="@+id/showRoutingTable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="showRoutingTable"/>
+                </LinearLayout>
+            </ScrollView>
+
+
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal">
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="mode: "
+                        android:textStyle="bold" />
+                    <TextView
+                        android:id="@+id/mode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/logTextView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="log:"
+                    android:textStyle="bold" />
+
+                <ScrollView
+                    android:id="@+id/scrollView"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:fadingEdge="vertical"
+                    android:scrollbars="vertical">
+
+                    <TextView
+                        android:id="@+id/log"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" />
+                </ScrollView>
+            </LinearLayout>
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>
+
