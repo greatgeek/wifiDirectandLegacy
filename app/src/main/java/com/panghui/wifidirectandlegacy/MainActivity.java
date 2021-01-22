@@ -590,7 +590,6 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         List<WifiConfiguration> list = wifiManager.getConfiguredNetworks();
         for( WifiConfiguration i : list ) {
             wifiManager.removeNetwork(i.networkId);
-            //wifiManager.saveConfiguration();
         }
     }
 
