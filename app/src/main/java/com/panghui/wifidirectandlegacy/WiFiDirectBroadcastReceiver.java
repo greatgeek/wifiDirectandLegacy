@@ -40,7 +40,7 @@ public class WiFiDirectBroadcastReceiver extends BroadcastReceiver {
     @Override
     public void onReceive(Context context, Intent intent) {
 
-        handler.obtainMessage(SET_TEXTVIEW,"DeviceAttributes.isGO： "+DeviceAttributes.isGO).sendToTarget();
+//        handler.obtainMessage(SET_TEXTVIEW,"DeviceAttributes.isGO： "+DeviceAttributes.isGO).sendToTarget();
         if(DeviceAttributes.isConnectedToGO){ // 若已连接到GO，则暂时不需要进行P2P设备扫描
             return;
         }

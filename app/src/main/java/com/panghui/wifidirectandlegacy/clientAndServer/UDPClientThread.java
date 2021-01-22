@@ -17,17 +17,22 @@ public class UDPClientThread extends Thread {
     public Handler handler;
     public String Android_ID;
     public int sendingPort;
-    public UDPClientThread(String Android_ID,Handler handler,int sendingPort){
+    public String msg;
+    public UDPClientThread(String Android_ID,Handler handler,int sendingPort,String msg){
         this.Android_ID = Android_ID;
         this.handler=handler;
         this.sendingPort = sendingPort;
+        this.msg = msg;
     }
 
     @Override
     public void run() {
         try {
-            RoutingItem item = new RoutingItem(Android_ID,"192.168.49.255","",0,0,5,"hello");
+            RoutingItem item = new RoutingItem(Android_ID,"192.168.49.255","",0,0,5,msg);
             sendMessage(JSON.toJSONString(item));
+            // TODO:1)断开与GO的连接 2）变成GO
+            handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
+            handler.obtainMessage(MainActivity.BECOME_GO).sendToTarget();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }

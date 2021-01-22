@@ -257,7 +257,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             public void onClick(View v) {
                 Log.d(MainActivity.TAG, "点击了CLIENT");
                 handler.obtainMessage(SET_TEXTVIEW, "点击了CLIENT").sendToTarget();
-                new UDPClientThread(Android_ID, handler, globalSendPort).start();
+                new UDPClientThread(Android_ID, handler, globalSendPort,"hello").start();
                 handler.obtainMessage(ROUND_TRIP_TIME_SEND).sendToTarget();
             }
         });
@@ -390,6 +390,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             @Override
             public void onClick(View v) {
                 disconnectFromGO();
+                handler.obtainMessage(BECOME_GO).sendToTarget();
             }
         });
 
@@ -497,8 +498,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"DeviceAttributes.isConnectedToGO: "+DeviceAttributes.isConnectedToGO).sendToTarget();
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"DeviceAttributes.isGO: "+DeviceAttributes.isGO).sendToTarget();
+//            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"DeviceAttributes.isConnectedToGO: "+DeviceAttributes.isConnectedToGO).sendToTarget();
+//            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"DeviceAttributes.isGO: "+DeviceAttributes.isGO).sendToTarget();
 
             if (DeviceAttributes.isConnectedToGO || DeviceAttributes.isGO) {
                 return;
@@ -793,12 +794,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                 }
 
                 case SEND_A_MESSAGE_DONE:{
-                    new UDPClientThread(Android_ID,handler,globalSendPort).start();
+                    String str = messageET.getText().toString();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
                     break;
                 }
 
                 case CONNECT_TO_GO_DONE:{
-                    new UDPClientThread(Android_ID,handler,globalSendPort).start();
+                    String str = messageET.getText().toString();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
                     break;
                 }
 
