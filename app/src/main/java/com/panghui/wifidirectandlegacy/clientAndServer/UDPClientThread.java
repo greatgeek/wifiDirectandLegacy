@@ -1,10 +1,11 @@
-package com.panghui.wifidirectandlegacy;
+package com.panghui.wifidirectandlegacy.clientAndServer;
 
 import android.os.Handler;
-import android.util.AndroidException;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.MainActivity;
+import com.panghui.wifidirectandlegacy.routing.RoutingItem;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -15,9 +16,11 @@ public class UDPClientThread extends Thread {
 
     public Handler handler;
     public String Android_ID;
-    public UDPClientThread(String Android_ID,Handler handler){
+    public int sendingPort;
+    public UDPClientThread(String Android_ID,Handler handler,int sendingPort){
         this.Android_ID = Android_ID;
         this.handler=handler;
+        this.sendingPort = sendingPort;
     }
 
     @Override
@@ -34,14 +37,14 @@ public class UDPClientThread extends Thread {
         String TAG = "sendMessage";
         Log.d(TAG,"发送数据");
         handler.obtainMessage(MainActivity.SET_TEXTVIEW,"发送数据").sendToTarget();
-        InetAddress broadcastAddress = InetAddress.getByName("192.168.49.255");
+        InetAddress ipAddress = InetAddress.getByName("192.168.49.255");
         DatagramSocket ds = null;
 
         try {
-            int sendPort = 23000;
+//            int sendingPort = 23000;
             ds = new DatagramSocket();
             ds.setBroadcast(true);
-            DatagramPacket dp = new DatagramPacket(str.getBytes(), str.getBytes().length, broadcastAddress, sendPort);
+            DatagramPacket dp = new DatagramPacket(str.getBytes(), str.getBytes().length, ipAddress, sendingPort);
             ds.send(dp);
         } catch (Exception e) {
             e.printStackTrace();

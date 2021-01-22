@@ -6,42 +6,34 @@ import android.net.wifi.p2p.WifiP2pManager.PeerListListener;
 import android.os.Handler;
 import android.util.Log;
 
-import java.util.HashMap;
 import java.util.List;
 
 public class MyPeerListListener implements PeerListListener {
     private List<WifiP2pDevice> peers;
     private Handler handler;
-    private HashMap<String,String> networkCredential;
         // 将 Device 列表传递到 MainActivity
-    public MyPeerListListener(List<WifiP2pDevice> peers, HashMap<String,String> networkCredential, Handler handler){
-        this.peers=peers;
+    public MyPeerListListener(List<WifiP2pDevice> peers,
+                              Handler handler){
         this.handler=handler;
-        this.networkCredential = networkCredential;
+        this.peers=peers;
     }
     @Override
     public void onPeersAvailable(WifiP2pDeviceList peersList) {
+
+        if(DeviceAttributes.foundP2pDevicesDone){
+            return;
+        }
+
+        // 获取 peers
         peers.clear();
         peers.addAll(peersList.getDeviceList());
 
-//        handler.obtainMessage(MainActivity.FOUND_PEER_DONE).sendToTarget();// 表示已找到设备
-
-        if(peers.size() == 0){
-            Log.d(MainActivity.TAG,"No devices found");
-//            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"No devices found").sendToTarget();
-            return;
-        }else{
-            for(int i=0;i<peers.size();i++){
-                String[] deviceNamePart=peers.get(i).deviceName.split("_");
-                if(deviceNamePart.length==3){
-                    networkCredential.put(deviceNamePart[1],deviceNamePart[2]);
-                }
-
-                Log.d(MainActivity.TAG,peers.get(i).deviceName);
-                handler.obtainMessage(MainActivity.SET_TEXTVIEW,peers.get(i).deviceName).sendToTarget();
-            }
-            Log.d(MainActivity.TAG, networkCredential.toString());
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW, networkCredential.toString()).sendToTarget();
+        Log.d(MainActivity.TAG,"找到了peer设备:"+peers.size());
+        handler.obtainMessage(MainActivity.SET_TEXTVIEW,"找到了peer设备:"+peers.size()).sendToTarget();
+        for (int i=0;i<peers.size();i++){
+            handler.obtainMessage(MainActivity.SET_TEXTVIEW,peers.get(i).deviceName).sendToTarget();
         }
+
+        handler.obtainMessage(MainActivity.FOUND_P2P_DEVICES_DONE).sendToTarget();// 表示已找到设备
     }
 }

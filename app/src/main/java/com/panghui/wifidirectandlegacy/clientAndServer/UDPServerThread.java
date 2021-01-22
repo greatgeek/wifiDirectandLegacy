@@ -1,9 +1,12 @@
-package com.panghui.wifidirectandlegacy;
+package com.panghui.wifidirectandlegacy.clientAndServer;
 
 import android.os.Handler;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.MainActivity;
+import com.panghui.wifidirectandlegacy.Utils;
+import com.panghui.wifidirectandlegacy.routing.RoutingItem;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -13,15 +16,16 @@ import java.net.UnknownHostException;
 
 public class UDPServerThread extends Thread{
     Handler handler;
-    String ipOfWD;
-    String ipOfWL;
     String Andriod_ID;
+    int receivePort;
+    String ip;
 
-    public UDPServerThread(String Android_ID,Handler handler,String ipOfWD,String ipOfWL){
+    public UDPServerThread(String Android_ID,Handler handler,int receivePort){
         this.Andriod_ID = Android_ID;
         this.handler = handler;
-        this.ipOfWD = ipOfWD;
-        this.ipOfWL = ipOfWL;
+        this.receivePort = receivePort;
+        this.ip = Utils.getIPAddress(true);
+        handler.obtainMessage(MainActivity.SET_TEXTVIEW,"设备IP为:"+ip).sendToTarget();
     }
     @Override
     public void run() {
@@ -35,7 +39,7 @@ public class UDPServerThread extends Thread{
             handler.obtainMessage(MainActivity.SET_TEXTVIEW,"UDP Listen begin").sendToTarget();
             DatagramSocket rds = null;
             try{
-                int receivePort = 23000;
+//                int receivePort = 23000;
                 byte[] inBuf = new byte[1024];
                 rds = new DatagramSocket(receivePort);
                 DatagramPacket inPacket = new DatagramPacket(inBuf,inBuf.length);
@@ -45,22 +49,30 @@ public class UDPServerThread extends Thread{
                 InetAddress address = inPacket.getAddress(); //获取发送方的IP地址
                 String clientIP = address.toString();
                 clientIP = clientIP.substring(1);
+                if(clientIP.equals(ip)){ // 若收到来自本设备的数据包，则重新开始循环
+                    continue;
+                }
 
                 RoutingItem item = new RoutingItem(Andriod_ID,clientIP,"",0,0,5,"ack");
-                sendMessage(JSON.toJSONString(item),clientIP);
 
-                 handler.obtainMessage(MainActivity.FORWARD,inPacket).sendToTarget(); // 转发
-                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,"clientIP:"+clientIP).sendToTarget();
-                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,"ipOfWD:"+ipOfWD).sendToTarget();
-                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,"ipOfWL:"+ipOfWL).sendToTarget();
+                String str = JSON.toJSONString(item);
+                sendMessage(str,clientIP); // 接收到消息后，回复一个 ack
+                handler.obtainMessage(MainActivity.ROUND_TRIP_TIME_RECEIVE).sendToTarget();
+
+//                handler.obtainMessage(MainActivity.FORWARD,inPacket).sendToTarget(); // 转发
+                handler.obtainMessage(MainActivity.SET_TEXTVIEW,"clientIP:"+clientIP).sendToTarget();
+                handler.obtainMessage(MainActivity.SET_TEXTVIEW,"设备IP为:"+ip).sendToTarget();
 
                 String rdata = new String(inPacket.getData()).trim();
 
                 Log.d(TAG,rdata);
 
-
                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,rdata+" "+"from "+ clientIP).sendToTarget();
-                handler.obtainMessage(MainActivity.UPDATE_ROUTING_TABLE, clientIP).sendToTarget(); // 更新路由表
+
+                if(clientIP.equals("192.168.49.1")){
+                    // 收到来自GO 的数据包后，即可以断开连接
+                    handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
+                }
 
             }catch (SocketTimeoutException e){
                 Log.e(TAG,"listen timeout");

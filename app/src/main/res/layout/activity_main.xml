@@ -84,13 +84,6 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="scanResult" />
-
-                    <Button
-                        android:id="@+id/connectToLegacy"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="connectToLegacy" />
-
                     <Button
                         android:id="@+id/getBatteryCapacity"
                         android:layout_width="match_parent"
@@ -110,6 +103,26 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="showRoutingTable"/>
+                    <Button
+                        android:id="@+id/AutoConn"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="AutoConn"/>
+                    <Button
+                        android:id="@+id/disconnectWifi"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="disconnectWifi"/>
+                    <EditText
+                        android:id="@+id/messageET"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content" />
+                    <Button
+                        android:id="@+id/sendMessageBT"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="sendMessageBT"/>
+
                 </LinearLayout>
             </ScrollView>
 

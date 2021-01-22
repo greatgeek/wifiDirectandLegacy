@@ -1,9 +1,9 @@
-package com.panghui.wifidirectandlegacy;
+package com.panghui.wifidirectandlegacy.clientAndServer;
 
 import android.os.Handler;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.routing.RoutingItem;
 
 import java.io.IOException;
 import java.net.DatagramPacket;

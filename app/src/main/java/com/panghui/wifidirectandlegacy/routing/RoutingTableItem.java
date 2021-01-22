@@ -1,4 +1,4 @@
-package com.panghui.wifidirectandlegacy;
+package com.panghui.wifidirectandlegacy.routing;
 
 public class RoutingTableItem {
     private String source;

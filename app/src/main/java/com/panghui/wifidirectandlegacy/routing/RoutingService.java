@@ -1,9 +1,10 @@
-package com.panghui.wifidirectandlegacy;
+package com.panghui.wifidirectandlegacy.routing;
 
 import android.os.Handler;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.MainActivity;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -16,13 +17,9 @@ public class RoutingService implements Runnable{
     LinkedList<RoutingTableItem> routingTable; // 引用本地路由表
     DatagramPacket packet;
     String Android_ID; // 本机地址 ID
-    String ipOfWD; // ip of wifi direct
-    String ipOfWL; // ip of wifi legacy
 
-    public RoutingService( String ipOfWD,String ipOfWL,String Android_ID, Handler handler,LinkedList<RoutingTableItem> routingTable , DatagramPacket packet){
+    public RoutingService(String Android_ID, Handler handler,LinkedList<RoutingTableItem> routingTable , DatagramPacket packet){
         this.handler = handler;
-        this.ipOfWD = ipOfWD;
-        this.ipOfWL = ipOfWL;
         this.Android_ID = Android_ID;
         this.routingTable = routingTable;
         this.packet = packet;
@@ -54,20 +51,6 @@ public class RoutingService implements Runnable{
     @Override
     public void run() {
         RoutingItem packetItem = parsePacket(packet); // 获取UDP包中的对象实例
-
-        if(packetItem.getSender().equals(Android_ID)){
-            Log.d(MainActivity.TAG,"发送设备为本机，不予以转发");
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"发送设备为本机，不予以转发").sendToTarget();
-            return;
-        }else if(packetItem.getDestination().equals(ipOfWL)){ // 目的地址为本机，则不予以转发
-            Log.d(MainActivity.TAG,"接收设备为本机，不予以转发");
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"接收设备为本机，不予以转发").sendToTarget();
-            return;
-        }else if(packetItem.getDestination().equals(ipOfWD)){
-            Log.d(MainActivity.TAG,"接收设备为GO，不予以转发");
-            handler.obtainMessage(MainActivity.SET_TEXTVIEW,"接收设备为GO，不予以转发").sendToTarget();
-            return;
-        }
 
         int ttl = packetItem.getTTL();
         if(ttl>0){

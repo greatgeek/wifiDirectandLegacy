@@ -5,6 +5,7 @@ import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.util.Log;
 
 import java.util.List;
 
@@ -138,9 +139,9 @@ public class WifiAdmin {
     // 添加一个网络并连接
     public void addNetwork(WifiConfiguration wcg) {
         int wcgID = mWifiManager.addNetwork(wcg);
-        boolean b =  mWifiManager.enableNetwork(wcgID, true);
-        System.out.println("a--" + wcgID);
-        System.out.println("b--" + b);
+        boolean result =  mWifiManager.enableNetwork(wcgID, true);
+        Log.d(MainActivity.TAG,"wcgID+"+wcgID);
+        Log.d(MainActivity.TAG,"result+"+result);
     }
 
     // 断开指定ID的网络
