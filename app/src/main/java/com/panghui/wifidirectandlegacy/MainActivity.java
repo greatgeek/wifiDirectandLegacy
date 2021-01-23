@@ -211,10 +211,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             public void onClick(View v) {
                 handler.obtainMessage(SET_TEXTVIEW,"DeviceAttributes.isGO"+DeviceAttributes.isGO).sendToTarget();
 
-                // 先进行组移除再启动扫描P2P设备过程
-                handler.obtainMessage(REMOVE_GROUP).sendToTarget();
-                // 启动扫描P2P设备过程
-                new InformationCollection(wifiP2pManager,channel,handler).start();
+                if(DeviceAttributes.isConnectedToGO){ // 若已连接，则可以直接发送消息
+                    String str = messageET.getText().toString();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
+                }else{
+                    // 先进行组移除再启动扫描P2P设备过程
+                    handler.obtainMessage(REMOVE_GROUP).sendToTarget();
+                    // 启动扫描P2P设备过程
+                    new InformationCollection(wifiP2pManager,channel,handler).start();
+                }
             }
         });
 
@@ -402,7 +407,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         new UDPServerThread(Android_ID, handler, globalReceivePort).start();
 
         // 应用启动即进入GO状态
-        new BecomeGroupOwner().start();
+//        new BecomeGroupOwner().start();
     }
 
     /**

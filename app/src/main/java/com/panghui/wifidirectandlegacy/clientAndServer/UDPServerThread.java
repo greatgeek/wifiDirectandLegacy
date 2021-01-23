@@ -69,10 +69,11 @@ public class UDPServerThread extends Thread{
 
                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,rdata+" "+"from "+ clientIP).sendToTarget();
 
-                if(clientIP.equals("192.168.49.1")){
-                    // 收到来自GO 的数据包后，即可以断开连接
-                    handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
-                }
+                // 方案一：每发送完一条消息就要断开连接进入GO； 方案二：每发送完成一条消息可以继续发送，等待用户已经确定发送完成消息后，再手动进入GO状态
+//                if(clientIP.equals("192.168.49.1")){
+//                    // 收到来自GO 的数据包后，即可以断开连接
+//                    handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
+//                }
 
             }catch (SocketTimeoutException e){
                 Log.e(TAG,"listen timeout");

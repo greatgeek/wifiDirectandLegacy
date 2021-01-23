@@ -31,8 +31,8 @@ public class UDPClientThread extends Thread {
             RoutingItem item = new RoutingItem(Android_ID,"192.168.49.255","",0,0,5,msg);
             sendMessage(JSON.toJSONString(item));
             // TODO:1)断开与GO的连接 2）变成GO
-            handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
-            handler.obtainMessage(MainActivity.BECOME_GO).sendToTarget();
+//            handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();
+//            handler.obtainMessage(MainActivity.BECOME_GO).sendToTarget();
         } catch (UnknownHostException e) {
             e.printStackTrace();
         }
