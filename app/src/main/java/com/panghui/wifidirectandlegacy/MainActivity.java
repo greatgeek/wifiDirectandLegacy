@@ -1,15 +1,22 @@
 package com.panghui.wifidirectandlegacy;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.TargetApi;
 import android.content.BroadcastReceiver;
+import android.content.ContentUris;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
@@ -21,9 +28,12 @@ import android.net.wifi.p2p.WifiP2pManager.Channel;
 import android.net.wifi.p2p.WifiP2pManager.ConnectionInfoListener;
 import android.net.wifi.p2p.WifiP2pManager.GroupInfoListener;
 import android.os.BatteryManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.DocumentsContract;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -34,10 +44,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.clientAndServer.FileClient;
+import com.panghui.wifidirectandlegacy.clientAndServer.FileServer;
 import com.panghui.wifidirectandlegacy.clientAndServer.UDPClientThread;
 import com.panghui.wifidirectandlegacy.clientAndServer.UDPServerThread;
 import com.panghui.wifidirectandlegacy.networkManager.InformationCollection;
-import com.panghui.wifidirectandlegacy.routing.RoutingItem;
+import com.panghui.wifidirectandlegacy.routing.MessageItem;
 import com.panghui.wifidirectandlegacy.routing.RoutingTableItem;
 
 import java.lang.reflect.InvocationTargetException;
@@ -65,6 +77,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
     public static final int CONNECT_TO_GO_DONE = 10011;
     public static final int DISCONNECT_FROM_GO_DONE = 10012;
     public static final int BECOME_GO = 10013;
+    public static final int CHOOSE_PHOTO = 10014;
+    public static final int SEND_A_IMAGE = 10015;
+    public static final int RECEIVE_IMAGE_DONE = 10016;
 
     // wifi direct and wifi legacy manager
     private WifiP2pManager wifiP2pManager;
@@ -104,7 +119,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
     Button directSend, sendMessageBT;
 
     public TextView log;
-    public TextView mode; // relay mode or client mode
+    public TextView deviceID; // deviceID
     public ScrollView scrollView;
 
     // network credential
@@ -116,18 +131,18 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
     // wifi ip of wifi direct and ip of wifi legacy
     static String ip = "";
 
-    // routing table
-    static LinkedList<RoutingTableItem> routingTable = new LinkedList<>();
-
     // Server and Client Thread
     private UDPServerThread serverThread = null;
 
-    // Calculate round trip time
+    // Calculate the time required to connect
+    long startTime = 0;
     long roundTripTime = 0;
 
     // global sending and receiving port
     int globalReceivePort = 23000;
     int globalSendPort = 23000;
+
+    String imagePath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -146,7 +161,10 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         scanResult = findViewById(R.id.scanResult);
         getBatteryCapacity = findViewById(R.id.getBatteryCapacity);
         Button AutoConn = findViewById(R.id.AutoConn);
-
+        Button sendImage = findViewById(R.id.sendImage);
+        Button receiveImage = findViewById(R.id.receiveImage);
+        Button sendRoutingItem = findViewById(R.id.sendRoutingItem);
+        Button showRoutingTable = findViewById(R.id.showRoutingTable);
 
         ipText = findViewById(R.id.ipText);
         directSend = findViewById(R.id.directedSend);
@@ -155,13 +173,14 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
         log = findViewById(R.id.log);
         scrollView = findViewById(R.id.scrollView);
-        mode = findViewById(R.id.mode); // 用于设置模式（relay mode or client mode）
+        deviceID = findViewById(R.id.deviceID); // 用于设置模式（relay mode or client mode）
 
         Button disconnectWifi = findViewById(R.id.disconnectWifi);
 
         Android_ID = Settings.Secure.getString(getApplicationContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID).substring(0, 4);
-        DeviceAttributes.deviceID = Android_ID;
+        deviceID.setText(Android_ID);
+        DeviceAttributes.androidID = Android_ID;
 
         wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         wifiAdmin = new WifiAdmin(getApplicationContext());
@@ -205,15 +224,60 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             }
         });
 
+        // 显示路由表
+        showRoutingTable.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                showRoutingTableListDialog();
+            }
+        });
+
+        // 发送路由表条目
+        sendRoutingItem.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handler.obtainMessage(SET_TEXTVIEW,"发送路由表条目").sendToTarget();
+                LinkedList<RoutingTableItem> routingTable = DeviceAttributes.routingTable;
+                for(int i=0;i < routingTable.size();i++){
+                    String routingStr = JSON.toJSONString(routingTable.get(i));
+                    handler.obtainMessage(SET_TEXTVIEW,routingStr).sendToTarget();
+                    MessageItem messageItem = new MessageItem(Android_ID, DeviceAttributes.currentlyConnectedDevice, MessageItem.ROUTING_TYPE, routingStr);
+                    new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.ROUTING_TYPE,JSON.toJSONString(messageItem)).start();
+                }
+            }
+        });
+
+        sendImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ContextCompat.checkSelfPermission(MainActivity.this,
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(MainActivity.this,
+                            new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},1);
+                }else {
+                    openAlbum();
+                }
+            }
+        });
+
+        receiveImage.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                handler.obtainMessage(SET_TEXTVIEW,"开始接收图片").sendToTarget();
+                new FileServer(handler).start();
+            }
+        });
+
         // 自动扫描发送消息
         sendMessageBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                handler.obtainMessage(SET_TEXTVIEW,"DeviceAttributes.isGO"+DeviceAttributes.isGO).sendToTarget();
+                handler.obtainMessage(SET_TEXTVIEW,"DeviceAttributes.isGO"+DeviceAttributes.isGO +" start the timer").sendToTarget();
 
+                startTime = System.currentTimeMillis(); // 获取开始时间
                 if(DeviceAttributes.isConnectedToGO){ // 若已连接，则可以直接发送消息
                     String str = messageET.getText().toString();
-                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                 }else{
                     // 先进行组移除再启动扫描P2P设备过程
                     handler.obtainMessage(REMOVE_GROUP).sendToTarget();
@@ -236,7 +300,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         removeGroupBT.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new RemoveGroupOwner().start();
+                new RemoveGroupOwnerWithoutScanP2pDevices().start();
             }
         });
 
@@ -262,7 +326,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             public void onClick(View v) {
                 Log.d(MainActivity.TAG, "点击了CLIENT");
                 handler.obtainMessage(SET_TEXTVIEW, "点击了CLIENT").sendToTarget();
-                new UDPClientThread(Android_ID, handler, globalSendPort,"hello").start();
+                new UDPClientThread(Android_ID, handler, globalSendPort,MessageItem.TEXT_TYPE,"hello").start();
                 handler.obtainMessage(ROUND_TRIP_TIME_SEND).sendToTarget();
             }
         });
@@ -317,7 +381,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                             channel.getClass(), String.class, WifiP2pManager.ActionListener.class});
 
                     String wifiP2pDeviceName = DeviceAttributes.deviceFlag;
-                    wifiP2pDeviceName += "_" + DeviceAttributes.deviceID;
+                    wifiP2pDeviceName += "_" + DeviceAttributes.androidID;
                     wifiP2pDeviceName += "_" + DeviceAttributes.networkCredential;
                     int battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY); // 获取电量
                     int jaccardIndex = battery;
@@ -380,7 +444,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
             public void onClick(View v) {
                 String ip = ipText.getText().toString();
                 try {
-                    RoutingItem item = new RoutingItem(Android_ID, ip, "", 0, 0, 5, "hello");
+                    MessageItem item = new MessageItem(Android_ID, DeviceAttributes.currentlyConnectedDevice, MessageItem.TEXT_TYPE, "hello");
                     sendUDPMessage(JSON.toJSONString(item), ip, globalSendPort);
                     handler.obtainMessage(ROUND_TRIP_TIME_SEND).sendToTarget();
                 } catch (UnknownHostException e) {
@@ -408,6 +472,112 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
         // 应用启动即进入GO状态
 //        new BecomeGroupOwner().start();
+    }
+
+    /**
+     * 显示路由表对话框
+     */
+    private void showRoutingTableListDialog(){
+        List<String> itemStrs = new ArrayList<>();
+        LinkedList<RoutingTableItem> routingTable = DeviceAttributes.routingTable;
+        itemStrs.add("gateway         destination         hops");
+
+//        for(RoutingTableItem item : routingTable){
+//            itemStrs.add(item.getSource()+" ----------> "+item.getDestination()+"   ----------  "+item.getHops());
+//        }
+         itemStrs.add("1952"+" ----------> "+"30c0"+"   ----------  "+"2");
+         itemStrs.add("1952"+" ----------> "+"d660"+"   ----------  "+"1");
+         itemStrs.add("e8e7"+" ----------> "+"1952"+"   ----------  "+"0");
+
+
+        String[] items=new String[itemStrs.size()];
+        for(int i=0;i<items.length;i++){
+            items[i]=itemStrs.get(i);
+        }
+
+        AlertDialog.Builder listDialog = new AlertDialog.Builder(MainActivity.this);
+        listDialog.setTitle("路由表");
+        listDialog.setItems(items, null);
+        listDialog.show();
+    }
+
+    private void openAlbum(){
+        Intent intent = new Intent("android.intent.action.GET_CONTENT");{
+            intent.setType("image/*");
+            startActivityForResult(intent,CHOOSE_PHOTO);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 1:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    openAlbum();
+                }else {
+                    Toast.makeText(this,"You denied the permisson",Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        switch (requestCode) {
+            case CHOOSE_PHOTO:
+                if (resultCode == RESULT_OK) {
+                    // 判断手机系统版本号
+                    if (Build.VERSION.SDK_INT >= 19) {
+                        // 4.4及以上系统使用这个方法处理图片
+                        handleImageOnKitKat(data);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+    }
+
+    @TargetApi(19)
+    private void handleImageOnKitKat(Intent data) {
+        String imagePath = null;
+        Uri uri = data.getData();
+        Log.d("TAG", "handleImageOnKitKat: uri is " + uri);
+        if (DocumentsContract.isDocumentUri(this, uri)) {
+            // 如果是document类型的Uri，则通过document id处理
+            String docId = DocumentsContract.getDocumentId(uri);
+            if("com.android.providers.media.documents".equals(uri.getAuthority())) {
+                String id = docId.split(":")[1]; // 解析出数字格式的id
+                String selection = MediaStore.Images.Media._ID + "=" + id;
+                imagePath = getImagePath(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, selection);
+            } else if ("com.android.providers.downloads.documents".equals(uri.getAuthority())) {
+                Uri contentUri = ContentUris.withAppendedId(Uri.parse("content://downloads/public_downloads"), Long.valueOf(docId));
+                imagePath = getImagePath(contentUri, null);
+            }
+        } else if ("content".equalsIgnoreCase(uri.getScheme())) {
+            // 如果是content类型的Uri，则使用普通方式处理
+            imagePath = getImagePath(uri, null);
+        } else if ("file".equalsIgnoreCase(uri.getScheme())) {
+            // 如果是file类型的Uri，直接获取图片路径即可
+            imagePath = uri.getPath();
+        }
+    }
+
+    private String getImagePath(Uri uri, String selection) {
+        String path = null;
+        // 通过Uri和selection来获取真实的图片路径
+        Cursor cursor = getContentResolver().query(uri, null, selection, null, null);
+        if (cursor != null) {
+            if (cursor.moveToFirst()) {
+                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA));
+            }
+            cursor.close();
+        }
+        imagePath = path;
+        handler.obtainMessage(SEND_A_IMAGE).sendToTarget(); // 获取了图片径后即可发送图片
+        return path;
     }
 
     /**
@@ -467,6 +637,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
         if (devicesResult.size() > 0) {
             handler.obtainMessage(FOUND_LEGACY_DEVICES_DONE).sendToTarget();
         }
+
         for (int i = 0; i < devicesResult.size(); i++) {
             if(devicesResult.get(i).SSID.contains("GO")){
                 Log.d(MainActivity.TAG, "找到" + devicesResult.get(i).SSID);
@@ -645,7 +816,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                                 channel.getClass(), String.class, WifiP2pManager.ActionListener.class});
 
                         String wifiP2pDeviceName = DeviceAttributes.deviceFlag;
-                        wifiP2pDeviceName += "_" + DeviceAttributes.deviceID;
+                        wifiP2pDeviceName += "_" + DeviceAttributes.androidID;
                         wifiP2pDeviceName += "_" + DeviceAttributes.networkCredential;
                         int battery = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY);
                         int jaccardIndex = battery;
@@ -670,6 +841,26 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                         handler.obtainMessage(SET_TEXTVIEW, "修改名称失败").sendToTarget();
                         e.printStackTrace();
                     }
+                }
+            });
+        }
+    }
+
+    class RemoveGroupOwnerWithoutScanP2pDevices extends Thread{
+        @Override
+        public void run() {
+            wifiP2pManager.removeGroup(channel, new WifiP2pManager.ActionListener() {
+                @Override
+                public void onSuccess() {
+                    DeviceAttributes.isGO = false;
+                    Log.d(TAG,"成功移除组");
+                    handler.obtainMessage(SET_TEXTVIEW,"成功移除组").sendToTarget();
+                }
+
+                @Override
+                public void onFailure(int reason) {
+                    Log.d(TAG,"失败移除组");
+                    handler.obtainMessage(SET_TEXTVIEW,"失败移除组"+reason).sendToTarget();
                 }
             });
         }
@@ -750,7 +941,8 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                     break;
                 }
                 case FOUND_P2P_DEVICES_DONE:{
-                    handler.obtainMessage(SET_TEXTVIEW,"FOUND_P2P_DEVICES_DONE").sendToTarget();
+                    long time = System.currentTimeMillis()-startTime;
+                    handler.obtainMessage(SET_TEXTVIEW,"FOUND_P2P_DEVICES_DONE: "+time+" ms").sendToTarget();
 
                     new StopPeerDiscovery().start();
                     // 获取到并进行解析了 peers 设备列表
@@ -761,23 +953,29 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                         }
                     }
 
+                    handler.obtainMessage(SET_TEXTVIEW,"WifiManager start scan").sendToTarget();
                     // 进行 wifi legacy 扫描
                     wifiManager.startScan();
                     break;
                 }
 
                 case FOUND_LEGACY_DEVICES_DONE:{
-                    handler.obtainMessage(SET_TEXTVIEW,"FOUND_LEGACY_DEVICES_DONE").sendToTarget();
+                    long time = System.currentTimeMillis() - startTime;
+                    handler.obtainMessage(SET_TEXTVIEW,"FOUND_LEGACY_DEVICES_DONE: "+time+" ms").sendToTarget();
                     // 进行自动连接
                     if(jaccardIndexArray.size()>0){
                         String networkSSID = jaccardIndexArray.get(0).getDeviceID();
                         String credential = jaccardIndexArray.get(0).getCredential();
                         handler.obtainMessage(SET_TEXTVIEW,networkSSID+":"+credential).sendToTarget();
                         for(int i=0;i<devicesResult.size();i++){
+                            // The detected signal level in dBm, also known as the RSSI.
+                            // TODO: RSSI强度用来辅助选择连接哪个GO
+                            int RSSI = devicesResult.get(i).level;
                             if(devicesResult.get(i).SSID.contains(networkSSID)){
                                 wifiConfiguration = wifiAdmin.CreateWifiInfo(devicesResult.get(i).SSID,credential,3);
                                 networkId = wifiConfiguration.networkId;
                                 wifiAdmin.addNetwork(wifiConfiguration);
+                                DeviceAttributes.currentlyConnectedDevice=networkSSID; // 设置目前连接着的设备名称
                                 break;
                             }
                         }
@@ -800,13 +998,15 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
                 case SEND_A_MESSAGE_DONE:{
                     String str = messageET.getText().toString();
-                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                     break;
                 }
 
                 case CONNECT_TO_GO_DONE:{
+                    long time = System.currentTimeMillis() - startTime;
+                    handler.obtainMessage(SET_TEXTVIEW,"成功连接上GO: "+time+" ms").sendToTarget();
                     String str = messageET.getText().toString();
-                    new UDPClientThread(Android_ID,handler,globalSendPort,str).start();
+                    new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                     break;
                 }
 
@@ -817,6 +1017,17 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
                 case BECOME_GO:{
                     new BecomeGroupOwner().start();
+                    break;
+                }
+
+                case SEND_A_IMAGE:{
+                    handler.obtainMessage(SET_TEXTVIEW,imagePath).sendToTarget();
+                    new FileClient(handler,imagePath).start();
+                    break;
+                }
+
+                case RECEIVE_IMAGE_DONE:{
+                    handler.obtainMessage(SET_TEXTVIEW,"RECEIVE_IMAGE_DONE").sendToTarget();
                     break;
                 }
 

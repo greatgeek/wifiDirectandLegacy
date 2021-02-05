@@ -29,65 +29,76 @@
                         android:id="@+id/discoverPeers"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="discoverPeers" />
 
                     <Button
                         android:id="@+id/become_GO"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="become_GO" />
 
                     <Button
                         android:id="@+id/connect"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="connect" />
 
                     <Button
                         android:id="@+id/removeGroup"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="removeGroup" />
 
                     <Button
                         android:id="@+id/Server"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="Server" />
 
                     <Button
                         android:id="@+id/Client"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="Client" />
 
                     <Button
                         android:id="@+id/requestGroupInfo"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="requestGroupInfo" />
 
                     <Button
                         android:id="@+id/getIPaddr"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="getIPaddr" />
 
                     <Button
                         android:id="@+id/setDeviceName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="setDeviceName" />
 
                     <Button
                         android:id="@+id/scanResult"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="scanResult" />
                     <Button
                         android:id="@+id/getBatteryCapacity"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="getBatteryCapacity" />
                     <EditText
                         android:id="@+id/ipText"
@@ -97,21 +108,19 @@
                         android:id="@+id/directedSend"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="directedSend"/>
-                    <Button
-                        android:id="@+id/showRoutingTable"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:text="showRoutingTable"/>
                     <Button
                         android:id="@+id/AutoConn"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="AutoConn"/>
                     <Button
                         android:id="@+id/disconnectWifi"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="disconnectWifi"/>
                     <EditText
                         android:id="@+id/messageET"
@@ -121,7 +130,33 @@
                         android:id="@+id/sendMessageBT"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textAllCaps="false"
                         android:text="sendMessageBT"/>
+                    <Button
+                        android:id="@+id/sendImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAllCaps="false"
+                        android:text="sendImage"/>
+                    <Button
+                        android:id="@+id/receiveImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAllCaps="false"
+                        android:text="receiveImage"/>
+                    <Button
+                        android:id="@+id/sendRoutingItem"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAllCaps="false"
+                        android:text="sendRoutingItem"/>
+
+                    <Button
+                        android:id="@+id/showRoutingTable"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:textAllCaps="false"
+                        android:text="showRoutingTable"/>
 
                 </LinearLayout>
             </ScrollView>
@@ -139,10 +174,10 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="mode: "
+                        android:text="android ID:"
                         android:textStyle="bold" />
                     <TextView
-                        android:id="@+id/mode"
+                        android:id="@+id/deviceID"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:textStyle="bold" />

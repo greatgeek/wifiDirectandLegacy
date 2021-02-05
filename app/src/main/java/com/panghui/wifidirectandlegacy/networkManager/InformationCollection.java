@@ -8,6 +8,7 @@ import android.util.Log;
 
 import com.panghui.wifidirectandlegacy.DeviceAttributes;
 import com.panghui.wifidirectandlegacy.MainActivity;
+import com.panghui.wifidirectandlegacy.routing.RoutingTableItem;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,6 +30,7 @@ public class InformationCollection extends Thread {
     // 解析设备名获得设备的ID列表、GO设备和RE设备的组网凭证和GO设备的 Jaccard 指数
     /**
      * 返回按照 jaccard 指数排序的列表，列表中包含了[deviceID, credential]
+     * 同时将0跳路由设备记录进路由表
      * @param peersList
      * @return
      */
@@ -42,9 +44,10 @@ public class InformationCollection extends Thread {
             if(deviceNamePart.length>0){
                 // 获取设备的 Jaccard 指数
                 if(deviceNamePart[0].equals("GO") && deviceNamePart.length>=4){
+                    RoutingTableItem item = new RoutingTableItem(DeviceAttributes.androidID,deviceNamePart[1],0);
+                    DeviceAttributes.routingTable.add(item);
+                    DeviceAttributes.neighborList.add(deviceNamePart[1]);
                     jaccardIndexList.add(new JaccardIndexItem(deviceNamePart[1],deviceNamePart[2],Integer.parseInt(deviceNamePart[3])));
-                }else if(deviceNamePart[0].equals("RE") && deviceNamePart.length>=5){
-                    jaccardIndexList.add(new JaccardIndexItem(deviceNamePart[1],deviceNamePart[2],Integer.parseInt(deviceNamePart[4])));
                 }
             }
         }

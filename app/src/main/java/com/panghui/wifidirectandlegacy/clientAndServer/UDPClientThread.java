@@ -4,8 +4,9 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.DeviceAttributes;
 import com.panghui.wifidirectandlegacy.MainActivity;
-import com.panghui.wifidirectandlegacy.routing.RoutingItem;
+import com.panghui.wifidirectandlegacy.routing.MessageItem;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -18,17 +19,19 @@ public class UDPClientThread extends Thread {
     public String Android_ID;
     public int sendingPort;
     public String msg;
-    public UDPClientThread(String Android_ID,Handler handler,int sendingPort,String msg){
+    public int messageType;
+    public UDPClientThread(String Android_ID,Handler handler,int sendingPort,int messageType,String msg){
         this.Android_ID = Android_ID;
         this.handler=handler;
         this.sendingPort = sendingPort;
+        this.messageType = messageType;
         this.msg = msg;
     }
 
     @Override
     public void run() {
         try {
-            RoutingItem item = new RoutingItem(Android_ID,"192.168.49.255","",0,0,5,msg);
+            MessageItem item = new MessageItem(Android_ID, DeviceAttributes.currentlyConnectedDevice, messageType,msg);
             sendMessage(JSON.toJSONString(item));
             // TODO:1)断开与GO的连接 2）变成GO
 //            handler.obtainMessage(MainActivity.DISCONNECT_FROM_GO_DONE).sendToTarget();

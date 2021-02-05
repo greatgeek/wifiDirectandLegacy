@@ -1,10 +1,8 @@
 package com.panghui.wifidirectandlegacy.routing;
 
 import android.os.Handler;
-import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
-import com.panghui.wifidirectandlegacy.MainActivity;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -25,10 +23,10 @@ public class RoutingService implements Runnable{
         this.packet = packet;
     }
 
-    public RoutingItem parsePacket(DatagramPacket packet){
+    public MessageItem parsePacket(DatagramPacket packet){
         String jsonDate = new String(packet.getData()).trim();
-        RoutingItem routingItem = JSON.parseObject(jsonDate, RoutingItem.class);
-        return routingItem;
+        MessageItem messageItem = JSON.parseObject(jsonDate, MessageItem.class);
+        return messageItem;
     }
 
     private void sendMessage(String str,String ipAddress) throws UnknownHostException {
@@ -50,22 +48,15 @@ public class RoutingService implements Runnable{
 
     @Override
     public void run() {
-        RoutingItem packetItem = parsePacket(packet); // 获取UDP包中的对象实例
-
-        int ttl = packetItem.getTTL();
-        if(ttl>0){
-            packetItem.setTTL(ttl-1);
-        }else { // 若已过期，则不进行转发
-            return;
-        }
+        MessageItem packetItem = parsePacket(packet); // 获取UDP包中的对象实例
 
         String destination="";
         if(packetItem.getDestination().equals("192.168.49.255")){ // 若目的地址为广播地址
             destination = "192.168.49.255";
         }else {
             for (RoutingTableItem tableItem : routingTable){
-                if(tableItem.getNeighbor().equals(packetItem.getDestination())){ // 在当前路由表中找到有该邻居的条目
-                    destination = tableItem.getNeighbor();
+                if(tableItem.getDestination().equals(packetItem.getDestination())){ // 在当前路由表中找到有该邻居的条目
+                    destination = tableItem.getDestination();
                     break;
                 }
             }

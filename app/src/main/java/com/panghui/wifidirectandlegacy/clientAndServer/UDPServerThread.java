@@ -4,15 +4,18 @@ import android.os.Handler;
 import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
+import com.panghui.wifidirectandlegacy.DeviceAttributes;
 import com.panghui.wifidirectandlegacy.MainActivity;
 import com.panghui.wifidirectandlegacy.Utils;
-import com.panghui.wifidirectandlegacy.routing.RoutingItem;
+import com.panghui.wifidirectandlegacy.routing.MessageItem;
+import com.panghui.wifidirectandlegacy.routing.RoutingTableItem;
 
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.LinkedList;
 
 public class UDPServerThread extends Thread{
     Handler handler;
@@ -53,7 +56,8 @@ public class UDPServerThread extends Thread{
                     continue;
                 }
 
-                RoutingItem item = new RoutingItem(Andriod_ID,clientIP,"",0,0,5,"ack");
+                String destination = "fa58"; // fa58 just a example
+                MessageItem item = new MessageItem(Andriod_ID,destination, MessageItem.TEXT_TYPE,"ack");
 
                 String str = JSON.toJSONString(item);
                 sendMessage(str,clientIP); // 接收到消息后，回复一个 ack
@@ -64,7 +68,7 @@ public class UDPServerThread extends Thread{
                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,"设备IP为:"+ip).sendToTarget();
 
                 String rdata = new String(inPacket.getData()).trim();
-
+                parseUDPPayload(rdata);
                 Log.d(TAG,rdata);
 
                 handler.obtainMessage(MainActivity.SET_TEXTVIEW,rdata+" "+"from "+ clientIP).sendToTarget();
@@ -111,6 +115,62 @@ public class UDPServerThread extends Thread{
             e.printStackTrace();
         } finally {
             if (ds != null) ds.close();
+        }
+    }
+
+    /**
+     * 解析 UDP payload
+     * @param UDPpayload
+     */
+    private void parseUDPPayload(String UDPpayload){
+        MessageItem item = JSON.parseObject(UDPpayload, MessageItem.class);
+        if(item.getType()== MessageItem.TEXT_TYPE){
+            handler.obtainMessage(MainActivity.SET_TEXTVIEW,
+                    "收到 MESSAGE_TYPE").sendToTarget();
+
+        }else if(item.getType()== MessageItem.ROUTING_TYPE){
+            handler.obtainMessage(MainActivity.SET_TEXTVIEW,
+                    "收到 ROUTING_TYPE").sendToTarget();
+            RoutingTableItem routingTableItem = JSON.parseObject(item.getPayload(),RoutingTableItem.class);
+            addRoutingTable(item.getPayload());
+            handler.obtainMessage(MainActivity.SET_TEXTVIEW,
+                    routingTableItem.getSource()+"-"+routingTableItem.getDestination()+"-"+routingTableItem.getHops()).sendToTarget();
+        }
+    }
+
+    /**
+     * 更新路由表
+     * @param payloadStr
+     */
+    private void addRoutingTable(String payloadStr){
+        RoutingTableItem routingTableItem = JSON.parseObject(payloadStr,RoutingTableItem.class);
+        String gateway = routingTableItem.getSource();
+        String destination = routingTableItem.getDestination();
+        int hops = routingTableItem.getHops();
+
+        // destination 设备为自身则无需更新路由表
+        if(destination.equals(DeviceAttributes.androidID)) return;
+
+        LinkedList<RoutingTableItem> routingTable = DeviceAttributes.routingTable;
+        for(int i=0;i < routingTable.size();i++){
+            // 发现更短的路径（对已存在的路径进行更改）
+            if(routingTable.get(i).getDestination().equals(destination) &&
+                    (!routingTable.get(i).getSource().equals(gateway) && routingTable.get(i).getHops()>hops+1)){
+                routingTable.get(i).setSource(gateway);
+                routingTable.get(i).setHops(hops+1);
+                return;
+            }
+        }
+
+        // 添加原本不存在的路径
+        // 若gateway 是邻居设备，destination 不是邻居设备，则添加进路由表并跳数+1
+        if(DeviceAttributes.neighborList.contains(gateway) &&
+                !DeviceAttributes.neighborList.contains(destination)){
+
+            RoutingTableItem item = new RoutingTableItem( gateway,
+                    destination, hops + 1);
+
+            DeviceAttributes.routingTable.add(item);
         }
     }
 }

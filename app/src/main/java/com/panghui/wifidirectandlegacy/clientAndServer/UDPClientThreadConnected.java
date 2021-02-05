@@ -3,7 +3,8 @@ package com.panghui.wifidirectandlegacy.clientAndServer;
 import android.os.Handler;
 
 import com.alibaba.fastjson.JSON;
-import com.panghui.wifidirectandlegacy.routing.RoutingItem;
+import com.panghui.wifidirectandlegacy.DeviceAttributes;
+import com.panghui.wifidirectandlegacy.routing.MessageItem;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -28,7 +29,7 @@ public class UDPClientThreadConnected extends Thread {
             client = new DatagramSocket();
             InetAddress ipAddress = InetAddress.getByName("192.168.49.1");
             client.connect(ipAddress,23000);
-            RoutingItem item = new RoutingItem(Android_ID,"192.168.49.255","",0,0,5,"hello");
+            MessageItem item = new MessageItem(Android_ID, DeviceAttributes.currentlyConnectedDevice, MessageItem.TEXT_TYPE,"hello");
             sendMessageConnected(JSON.toJSONString(item));
         } catch (UnknownHostException e) {
             e.printStackTrace();
