@@ -56,7 +56,7 @@ public class UDPServerThread extends Thread{
                     continue;
                 }
 
-                String destination = "fa58"; // fa58 just a example
+                String destination = DeviceAttributes.currentlyConnectedDevice; // fa58 just a example
                 MessageItem item = new MessageItem(Andriod_ID,destination, MessageItem.TEXT_TYPE,"ack");
 
                 String str = JSON.toJSONString(item);

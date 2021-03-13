@@ -115,7 +115,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
     Button setDeviceName;
     Button scanResult;
     Button getBatteryCapacity;
-    EditText ipText, messageET;
+    EditText ipText, targetDeviceName;
     Button directSend, sendMessageBT;
 
     public TextView log;
@@ -168,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
         ipText = findViewById(R.id.ipText);
         directSend = findViewById(R.id.directedSend);
-        messageET = findViewById(R.id.messageET);
+        targetDeviceName = findViewById(R.id.targetDeviceName);
         sendMessageBT = findViewById(R.id.sendMessageBT);
 
         log = findViewById(R.id.log);
@@ -276,7 +276,9 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 
                 startTime = System.currentTimeMillis(); // 获取开始时间
                 if(DeviceAttributes.isConnectedToGO){ // 若已连接，则可以直接发送消息
-                    String str = messageET.getText().toString();
+                    String str = targetDeviceName.getText().toString();
+                    DeviceAttributes.targetDeviceName = str;
+                    handler.obtainMessage(SET_TEXTVIEW, "target Device Name: "+DeviceAttributes.targetDeviceName).sendToTarget();
                     new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                 }else{
                     // 先进行组移除再启动扫描P2P设备过程
@@ -485,9 +487,29 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
 //        for(RoutingTableItem item : routingTable){
 //            itemStrs.add(item.getSource()+" ----------> "+item.getDestination()+"   ----------  "+item.getHops());
 //        }
-         itemStrs.add("1952"+" ----------> "+"30c0"+"   ----------  "+"2");
-         itemStrs.add("1952"+" ----------> "+"d660"+"   ----------  "+"1");
-         itemStrs.add("e8e7"+" ----------> "+"1952"+"   ----------  "+"0");
+//         itemStrs.add("1952"+" ----------> "+"30c0"+"   ----------  "+"2");
+//         itemStrs.add("1952"+" ----------> "+"d660"+"   ----------  "+"1");
+//         itemStrs.add("e8e7"+" ----------> "+"1952"+"   ----------  "+"0");
+
+        // 30c0
+//        itemStrs.add("30c0"+" ----------> "+"d660"+"   ----------  "+"0");
+//        itemStrs.add("d660"+" ----------> "+"1952"+"   ----------  "+"1");
+//        itemStrs.add("d660"+" ----------> "+"e8e7"+"   ----------  "+"2");
+
+        // d660
+//        itemStrs.add("d660"+" ----------> "+"30c0"+"   ----------  "+"0");
+//        itemStrs.add("d660"+" ----------> "+"1952"+"   ----------  "+"0");
+//        itemStrs.add("1952"+" ----------> "+"e8e7"+"   ----------  "+"1");
+
+        // 1952
+//        itemStrs.add("d660"+" ----------> "+"30c0"+"   ----------  "+"1");
+//        itemStrs.add("1952"+" ----------> "+"d660"+"   ----------  "+"0");
+//        itemStrs.add("1952"+" ----------> "+"e8e7"+"   ----------  "+"0");
+
+        // e8e7
+        itemStrs.add("1952"+" ----------> "+"30c0"+"   ----------  "+"2");
+        itemStrs.add("1952"+" ----------> "+"d660"+"   ----------  "+"1");
+        itemStrs.add("e8e7"+" ----------> "+"1952"+"   ----------  "+"0");
 
 
         String[] items=new String[itemStrs.size()];
@@ -959,13 +981,23 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                     break;
                 }
 
+
                 case FOUND_LEGACY_DEVICES_DONE:{
                     long time = System.currentTimeMillis() - startTime;
                     handler.obtainMessage(SET_TEXTVIEW,"FOUND_LEGACY_DEVICES_DONE: "+time+" ms").sendToTarget();
                     // 进行自动连接
                     if(jaccardIndexArray.size()>0){
-                        String networkSSID = jaccardIndexArray.get(0).getDeviceID();
-                        String credential = jaccardIndexArray.get(0).getCredential();
+                        String networkSSID = "" ;
+                        String credential = "" ;
+                        for(int i=0;i<jaccardIndexArray.size();i++){
+                            if(jaccardIndexArray.get(i).getDeviceID().contains(DeviceAttributes.targetDeviceName)){
+                                handler.obtainMessage(SET_TEXTVIEW,"target Device Name :"+DeviceAttributes.targetDeviceName).sendToTarget();
+                                networkSSID = jaccardIndexArray.get(i).getDeviceID() ;
+                                credential = jaccardIndexArray.get(i).getCredential();
+                                break;
+                            }
+                        }
+
                         handler.obtainMessage(SET_TEXTVIEW,networkSSID+":"+credential).sendToTarget();
                         for(int i=0;i<devicesResult.size();i++){
                             // The detected signal level in dBm, also known as the RSSI.
@@ -997,7 +1029,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                 }
 
                 case SEND_A_MESSAGE_DONE:{
-                    String str = messageET.getText().toString();
+                    String str = targetDeviceName.getText().toString();
                     new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                     break;
                 }
@@ -1005,7 +1037,7 @@ public class MainActivity extends AppCompatActivity implements ConnectionInfoLis
                 case CONNECT_TO_GO_DONE:{
                     long time = System.currentTimeMillis() - startTime;
                     handler.obtainMessage(SET_TEXTVIEW,"成功连接上GO: "+time+" ms").sendToTarget();
-                    String str = messageET.getText().toString();
+                    String str = targetDeviceName.getText().toString();
                     new UDPClientThread(Android_ID,handler,globalSendPort,MessageItem.TEXT_TYPE,str).start();
                     break;
                 }

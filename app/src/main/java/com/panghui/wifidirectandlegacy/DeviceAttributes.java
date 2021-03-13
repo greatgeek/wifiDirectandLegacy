@@ -16,7 +16,8 @@ public class DeviceAttributes {
     static public boolean isGO = false;
     static public boolean foundP2pDevicesDone = false;
 
-    static public String currentlyConnectedDevice="";
+    static public String currentlyConnectedDevice = "";
+    static public String targetDeviceName = "";
 
     // routing table
     static public LinkedList<RoutingTableItem> routingTable = new LinkedList<>();
